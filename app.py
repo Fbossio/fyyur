@@ -12,6 +12,7 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from flask_migrate import Migrate
+from datetime import datetime
 from forms import *
 #----------------------------------------------------------------------------#
 # App Config.
@@ -70,10 +71,6 @@ class Artist(db.Model):
     def __repr__(self):
         return f'< Artist: {self.id} {self.name} >'
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
-
 
 class Show(db.Model):
     __tablename__ = 'shows'
@@ -104,6 +101,7 @@ def format_datetime(value, format='medium'):
 
 app.jinja_env.filters['datetime'] = format_datetime
 
+
 #----------------------------------------------------------------------------#
 # Controllers.
 #----------------------------------------------------------------------------#
@@ -119,44 +117,55 @@ def index():
 
 @app.route('/venues')
 def venues():
-    # TODO: replace with real venues data.
+
     #       num_shows should be aggregated based on number of upcoming shows per venue.
-    data = [{
-        "city": "San Francisco",
-        "state": "CA",
-        "venues": [{
-            "id": 1,
-            "name": "The Musical Hop",
-            "num_upcoming_shows": 0,
-        }, {
-            "id": 3,
-            "name": "Park Square Live Music & Coffee",
-            "num_upcoming_shows": 1,
-        }]
-    }, {
-        "city": "New York",
-        "state": "NY",
-        "venues": [{
-            "id": 2,
-            "name": "The Dueling Pianos Bar",
-            "num_upcoming_shows": 0,
-        }]
-    }]
+
+    # <----------------------------->
+    # Get a list of tupples of unique (city, state)
+    # Based on stack overflow post
+    # url: https://stackoverflow.com/questions/22275412/sqlalchemy-return-all-distinct-column-values
+
+    areas = Venue.query.with_entities(Venue.city, Venue.state).distinct().all()
+    # <----------------------------->
+    data = []
+    for area in areas:
+        venues_data = Venue.query.filter(
+            Venue.city == area[0], Venue.state == area[1]).all()
+        venue_list = []
+
+        for venue_data in venues_data:
+            shows = Show.query.filter_by(venue_id=vuenue_data-id).all
+            venue_list.append({
+                "id": venue_data.id,
+                "name": venue_data.name,
+                "num_upcoming_shows": Show.query.filter_by(venue_id=venue_data.id).filter_by(start_time > datetime.now()).count()
+            })
+
+        data.append({
+            "city": area[0],
+            "state": area[1],
+            "venues": venue_list
+        })
+
     return render_template('pages/venues.html', areas=data)
 
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-    # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-    # seach for Hop should return "The Musical Hop".
-    # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+
+    search_term = request.form.get('search_term', '')
+    venues = Venue.query.filter(Venue.name.ilike(f'%{search_term}%')).all()
+    data = []
+    for venue in venues:
+        data.append({
+            "id": venue.id,
+            "name": venue.name,
+            "num_upcoming_shows": Show.query.filter_by(venue_id=venue.id).filter_by(start_time > datetime.now()).count()
+        })
+
     response = {
-        "count": 1,
-        "data": [{
-            "id": 2,
-            "name": "The Dueling Pianos Bar",
-            "num_upcoming_shows": 0,
-        }]
+        "count": len(venues),
+        "data": data
     }
     return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 

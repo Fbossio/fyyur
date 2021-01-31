@@ -323,15 +323,16 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
+
     search_term = request.form.get('search_term', '')
-     artist = Artist.query.filter(Artist.name.ilike(f'%{search_term}%')).all()
-      data = []
-       for venue in venues:
-            data.append({
-                "id": artist.id,
-                "name": artist.name,
-                "num_upcoming_shows": Show.query.filter_by(artist_id=artist.id).filter_by(start_time >= datetime.now()).count()
-            })
+    artist = Artist.query.filter(Artist.name.ilike(f'%{search_term}%')).all()
+    data = []
+    for venue in venues:
+        data.append({
+            "id": artist.id,
+            "name": artist.name,
+            "num_upcoming_shows": Show.query.filter_by(artist_id=artist.id).filter_by(start_time >= datetime.now()).count()
+        })
 
         response = {
             "count": len(venues),
@@ -342,7 +343,7 @@ def search_artists():
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
-    
+
     artist = Artist.query.filter_by(id=artist_id).first_or_404()
     # Get the list of genres from the artist object
     genres = [genre for genre in artist.genres]
@@ -376,24 +377,23 @@ def show_artist(artist_id):
         past_shows.append(data)
 
         data = {
-        "id": artist.id,
-        "name": artist.name,
-        "genres": genres,
-        "city": artist.city,
-        "state": artist.state,
-        "phone": artist.phone,
-        "website": artist.website,
-        "facebook_link": artist.facebook_link,
-        "seeking_venue": artist.seeking_venue,
-        "seeking_description": artist.seeking_description,
-        "image_link": artist.image_link,
-        "upcoming_shows": upcoming_shows,
-        "past_shows": past_shows,
-        "past_shows_count": len(past_shows),
-        "upcoming_shows_count": len(upcoming_shows)
-    }
+            "id": artist.id,
+            "name": artist.name,
+            "genres": genres,
+            "city": artist.city,
+            "state": artist.state,
+            "phone": artist.phone,
+            "website": artist.website,
+            "facebook_link": artist.facebook_link,
+            "seeking_venue": artist.seeking_venue,
+            "seeking_description": artist.seeking_description,
+            "image_link": artist.image_link,
+            "upcoming_shows": upcoming_shows,
+            "past_shows": past_shows,
+            "past_shows_count": len(past_shows),
+            "upcoming_shows_count": len(upcoming_shows)
+        }
 
-    
     return render_template('pages/show_artist.html', artist=data)
 
 #  Update
@@ -404,7 +404,7 @@ def show_artist(artist_id):
 def edit_artist(artist_id):
     artist_query = Artist.query.filter_by(id=artist_id).first()
     form = ArtistForm(obj=artist_query)
-    
+
     artist = {
         "id": artist_query.id,
         "name": artist_query.name,
@@ -418,13 +418,13 @@ def edit_artist(artist_id):
         "seeking_description": artist_query.seeking_description,
         "image_link": artist_query.image_link
     }
-    
+
     return render_template('forms/edit_artist.html', form=form, artist=artist)
 
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
-    
+
     error = False
     artist = Artist.query.get(artist_id)
 
@@ -448,9 +448,9 @@ def edit_artist_submission(artist_id):
     finally:
         db.session.close()
     if error:
-        flash(f'An error occurred. Artist {request.form['name']} could not be changed.')
+        flash(f'An error occurred. Artist {artist.name} could not be changed.')
     if not error:
-        flash(f'Artist {request.form['name']} was successfully updated!')
+        flash(f'Artist {artist.name} was successfully updated!')
 
     return redirect(url_for('show_artist', artist_id=artist_id))
 
@@ -473,7 +473,7 @@ def edit_venue(venue_id):
         "seeking_description": venue_query.seeking_description,
         "image_link": venue_query.image_link
     }
-    
+
     return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 
@@ -505,9 +505,9 @@ def edit_venue_submission(venue_id):
     finally:
         db.session.close()
     if error:
-        flash(f'An error occurred. Venue {request.form['name']} could not be changed.')
+        flash(f'An error occurred. Venue {venue.name} could not be changed.')
     if not error:
-        flash(f'Venue {request.form['name']} was successfully updated!')
+        flash(f'Venue {venue.name} was successfully updated!')
 
     return redirect(url_for('show_venue', venue_id=venue_id))
 
@@ -523,7 +523,7 @@ def create_artist_form():
 
 @app.route('/artists/create', methods=['POST'])
 def create_artist_submission():
-    
+
     error = False
     try:
         name = request.form.get('name', '')
@@ -552,16 +552,16 @@ def create_artist_submission():
         db.session.close()
 
     if error:
-        flash(f'An error occurred. Artist {request.form['name']} could not be listed.')
+        flash('An error occurred. Artist could not be listed.')
 
     if not error:
 
-        flash(f'Artist {request.form['name']} was successfully listed!')
+        flash('Artist was successfully listed!')
 
-    
     return render_template('pages/home.html')
 
 # Delete an artist
+
 
 @app.route('/artists/<artist_id>', methods=['DELETE'])
 def delete_artist(artist_id):
@@ -570,21 +570,20 @@ def delete_artist(artist_id):
         artist = Artist.query.get(artist_id)
         db.session.delete(artist)
         db.session.commit()
-        
+
     except:
         error = True
         db.session.rollback()
         print(sys.exc_info())
-        
+
     finally:
-        db.session.close()        
-    
+        db.session.close()
+
     if error:
         flash('The artist has been removed from de data base')
-    
+
     if not error:
         flash('It was not possible to delete this artist')
-
 
     return redirect(url_for('artists'))
 
@@ -594,7 +593,7 @@ def delete_artist(artist_id):
 
 @app.route('/shows')
 def shows():
-    
+
     data = []
     # Query all shows from the database
     shows = Show.query.all()
@@ -610,7 +609,7 @@ def shows():
             "artist_image_link": artist.image_link,
             "start_time": show.start_time
         })
-    
+
     return render_template('pages/shows.html', shows=data)
 
 
@@ -623,7 +622,7 @@ def create_shows():
 
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
-    
+
     error = False
     try:
         artist_id = request.form['artist_id']
@@ -650,7 +649,6 @@ def create_show_submission():
 
         flash('Show was successfully listed!')
 
-    
     return render_template('pages/home.html')
 
 

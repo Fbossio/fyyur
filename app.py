@@ -91,7 +91,11 @@ class Show(db.Model):
 
 
 def format_datetime(value, format='medium'):
-    date = dateutil.parser.parse(value)
+    #date = dateutil.parser.parse(value)
+    if isinstance(value, str):
+        date = dateutil.parser.parse(value)
+    else:
+        date = value
 
     if format == 'full':
         format = "EEEE MMMM, d, y 'at' h:mma"
@@ -135,11 +139,11 @@ def venues():
         venue_list = []
 
         for venue_data in venues_data:
-            shows = Show.query.filter_by(venue_id=vuenue_data-id).all
+            shows = Show.query.filter_by(venue_id=venue_data.id).all
             venue_list.append({
                 "id": venue_data.id,
                 "name": venue_data.name,
-                "num_upcoming_shows": Show.query.filter_by(venue_id=venue_data.id).filter_by(start_time > datetime.now()).count()
+                "num_upcoming_shows": Show.query.filter(Show.venue_id == venue_data.id).filter(Show.start_time > datetime.now()).count()
             })
 
         data.append({
@@ -161,7 +165,8 @@ def search_venues():
         data.append({
             "id": venue.id,
             "name": venue.name,
-            "num_upcoming_shows": Show.query.filter_by(venue_id=venue.id).filter_by(start_time >= datetime.now()).count()
+            "num_upcoming_shows": Show.query.filter(Show.venue_id == venue.id).filter(Show.start_time >= datetime.now()).count()
+
         })
 
     response = {
@@ -178,10 +183,10 @@ def show_venue(venue_id):
     # Get the list of genres from the venue object
     genres = [genre for genre in venue.genres]
 
-    upcoming = Show.query.filter_by(venue_id=venue_id).filter_by(
-        start_time >= datetime.now()).all()
-    past = Show.query.filter_by(venue_id=venue_id).filter_by(
-        start_time < datetime.now()).all()
+    upcoming = Show.query.filter(Show.venue_id == venue_id).filter(
+        Show.start_time >= datetime.now()).all()
+    past = Show.query.filter(Show.venue_id == venue_id).filter(
+        Show.start_time < datetime.now()).all()
 
     upcoming_shows = []
     past_shows = []
@@ -210,7 +215,7 @@ def show_venue(venue_id):
         "id": venue.id,
         "name": venue.name,
         "genres": genres,
-        "address": venue.genres,
+        "address": venue.address,
         "city": venue.city,
         "state": venue.state,
         "phone": venue.phone,
@@ -325,17 +330,17 @@ def artists():
 def search_artists():
 
     search_term = request.form.get('search_term', '')
-    artist = Artist.query.filter(Artist.name.ilike(f'%{search_term}%')).all()
+    artists = Artist.query.filter(Artist.name.ilike(f'%{search_term}%')).all()
     data = []
-    for venue in venues:
+    for artist in artists:
         data.append({
             "id": artist.id,
             "name": artist.name,
-            "num_upcoming_shows": Show.query.filter_by(artist_id=artist.id).filter_by(start_time >= datetime.now()).count()
+            "num_upcoming_shows": Show.query.filter(Show.artist_id == artist.id).filter(Show.start_time >= datetime.now()).count()
         })
 
         response = {
-            "count": len(venues),
+            "count": len(artists),
             "data": data
         }
         return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
@@ -348,51 +353,51 @@ def show_artist(artist_id):
     # Get the list of genres from the artist object
     genres = [genre for genre in artist.genres]
 
-    upcoming = Show.query.filter_by(artist_id=artist_id).filter_by(
-        start_time >= datetime.now()).all()
-    past = Show.query.filter_by(artist_id=artist_id).filter_by(
-        start_time < datetime.now()).all()
+    upcoming = Show.query.filter(Show.artist_id == artist_id).filter(
+        Show.start_time >= datetime.now()).all()
+    past = Show.query.filter(Show.artist_id == artist_id).filter(
+        Show.start_time < datetime.now()).all()
 
     upcoming_shows = []
     past_shows = []
 
     for show in upcoming:
         venue = Venue.query.get(show.venue_id)
-        data = {
+        venue_data = {
             "venue_id": venue.id,
             "venue_name": venue.name,
             "venue_image_link": venue.image_link,
             "start_time": show.start_time.strftime('%Y-%m-%d %H:%M:%S')
         }
-        upcoming_shows.append(data)
+        upcoming_shows.append(venue_data)
 
     for show in past:
         venue = Venue.query.get(show.venue_id)
-        data = {
+        venue_data = {
             "venue_id": venue.id,
             "venue_name": venue.name,
             "venue_image_link": venue.image_link,
             "start_time": show.start_time.strftime('%Y-%m-%d %H:%M:%S')
         }
-        past_shows.append(data)
+        past_shows.append(venue_data)
 
-        data = {
-            "id": artist.id,
-            "name": artist.name,
-            "genres": genres,
-            "city": artist.city,
-            "state": artist.state,
-            "phone": artist.phone,
-            "website": artist.website,
-            "facebook_link": artist.facebook_link,
-            "seeking_venue": artist.seeking_venue,
-            "seeking_description": artist.seeking_description,
-            "image_link": artist.image_link,
-            "upcoming_shows": upcoming_shows,
-            "past_shows": past_shows,
-            "past_shows_count": len(past_shows),
-            "upcoming_shows_count": len(upcoming_shows)
-        }
+    data = {
+        "id": artist.id,
+        "name": artist.name,
+        "genres": genres,
+        "city": artist.city,
+        "state": artist.state,
+        "phone": artist.phone,
+        "website": artist.website,
+        "facebook_link": artist.facebook_link,
+        "seeking_venue": artist.seeking_venue,
+        "seeking_description": artist.seeking_description,
+        "image_link": artist.image_link,
+        "upcoming_shows": upcoming_shows,
+        "past_shows": past_shows,
+        "past_shows_count": len(past_shows),
+        "upcoming_shows_count": len(upcoming_shows)
+    }
 
     return render_template('pages/show_artist.html', artist=data)
 

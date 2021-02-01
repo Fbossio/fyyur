@@ -585,10 +585,10 @@ def delete_artist(artist_id):
         db.session.close()
 
     if error:
-        flash('The artist has been removed from de data base')
+        flash('It was not possible to delete this artist')
 
     if not error:
-        flash('It was not possible to delete this artist')
+        flash('The artist has been removed from de data base')
 
     return redirect(url_for('artists'))
 

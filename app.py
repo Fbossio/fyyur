@@ -302,7 +302,7 @@ def delete_venue(venue_id):
         flash('An error occurred. The venue could not be deleted.')
 
     if not error:
-        flash('The venue was successfully listed!')
+        flash('The venue was successfully deleted!')
 
     return redirect(url_for('venues'))
 
@@ -453,9 +453,9 @@ def edit_artist_submission(artist_id):
     finally:
         db.session.close()
     if error:
-        flash(f'An error occurred. Artist {artist.name} could not be changed.')
+        flash('An error occurred. The artist could not be changed.')
     if not error:
-        flash(f'Artist {artist.name} was successfully updated!')
+        flash('The artist was successfully updated!')
 
     return redirect(url_for('show_artist', artist_id=artist_id))
 
@@ -510,9 +510,9 @@ def edit_venue_submission(venue_id):
     finally:
         db.session.close()
     if error:
-        flash(f'An error occurred. Venue {venue.name} could not be changed.')
+        flash('An error occurred. The venue could not be changed.')
     if not error:
-        flash(f'Venue {venue.name} was successfully updated!')
+        flash('The Venue was successfully updated!')
 
     return redirect(url_for('show_venue', venue_id=venue_id))
 

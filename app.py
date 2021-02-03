@@ -301,33 +301,32 @@ def show_artist(artist_id):
     # Get the list of genres from the artist object
     genres = [genre for genre in artist.genres]
 
-    upcoming = Show.query.filter(Show.artist_id == artist_id).filter(
-        Show.start_time >= datetime.now()).all()
-    past = Show.query.filter(Show.artist_id == artist_id).filter(
-        Show.start_time < datetime.now()).all()
+    upcoming_shows_details = db.session.query(Show).join(
+        Venue, Show.venue_id == Venue.id).filter(Show.start_time >= datetime.now()).all()
+
+    past_shows_details = db.session.query(Show).join(
+        Venue, Show.venue_id == Venue.id).filter(Show.start_time < datetime.now()).all()
 
     upcoming_shows = []
     past_shows = []
 
-    for show in upcoming:
-        venue = Venue.query.get(show.venue_id)
-        venue_data = {
-            "venue_id": venue.id,
-            "venue_name": venue.name,
-            "venue_image_link": venue.image_link,
-            "start_time": show.start_time.strftime('%Y-%m-%d %H:%M:%S')
-        }
-        upcoming_shows.append(venue_data)
+    for show in upcoming_shows:
 
-    for show in past:
-        venue = Venue.query.get(show.venue_id)
-        venue_data = {
-            "venue_id": venue.id,
-            "venue_name": venue.name,
-            "venue_image_link": venue.image_link,
+        upcoming_shows.append({
+            "venue_id": show.venue_id,
+            "venue_name": show.venue.name,
+            "venue_image_link": show.venue.image_link,
             "start_time": show.start_time.strftime('%Y-%m-%d %H:%M:%S')
-        }
-        past_shows.append(venue_data)
+        })
+
+    for show in past_shows:
+
+        past_shows.append({
+            "venue_id": show.venue_id,
+            "venue_name": show.venue.name,
+            "venue_image_link": show.venue.image_link,
+            "start_time": show.start_time.strftime('%Y-%m-%d %H:%M:%S')
+        })
 
     data = {
         "id": artist.id,

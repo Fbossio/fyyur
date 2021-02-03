@@ -547,18 +547,19 @@ def delete_artist(artist_id):
 def shows():
 
     data = []
-    # Query all shows from the database
-    shows = Show.query.all()
 
-    for show in shows:
-        venue = Venue.query.filter_by(id=show.venue_id).first()
-        artist = Artist.query.filter_by(id=show.artist_id).first()
+    # Join shows, artists and venues tables
+    shows_details = db.session.query(Show).join(
+        Artist, Show.artist_id == Artist.id).join(Venue, Show.venue_id == Venue.id).all()
+
+    for show in shows_details:
+
         data.append({
             "venue_id": show.venue_id,
-            "venue_name": venue.name,
+            "venue_name": show.venue.name,
             "artist_id": show.artist_id,
-            "artist_name": artist.name,
-            "artist_image_link": artist.image_link,
+            "artist_name": show.artist.name,
+            "artist_image_link": show.artist.image_link,
             "start_time": show.start_time
         })
 
